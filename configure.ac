@@ -1,5 +1,5 @@
 # 初始化项目和版本
-AC_INIT(CProjectTemplate, 1.0.0 junchenghe@goolge.com)
+AC_INIT(SFController, 1.0.0 juncheng0@gmail.com)
 
 # 指定源代码目录
 AC_CONFIG_SRCDIR([src/main.c])
@@ -25,14 +25,13 @@ AM_PROG_AR
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 # 检查子目录中的程序
-AC_CONFIG_SUBDIRS([src/add])
+# AC_CONFIG_SUBDIRS([src/add])
 # AC_CONFIG_SUBDIRS([third_party/Unity])
 AC_CONFIG_SUBDIRS([third_party/log.c])
 
 # 设置输出文件
 AC_CONFIG_FILES([
     Makefile
-    src/add/Makefile
     third_party/log.c/Makefile
 ])
 

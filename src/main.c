@@ -1,56 +1,72 @@
-/**
- * @file main.c
- * @brief main
- * @details 略
- * @mainpage 略
- * @author 何俊成
- * @date 2023-10-17
- * @version v1.0.0
- * @par Copyright(c): hone
- * @par History:         
- *	version: author, date, desc\n
- *   v1.0.0: 何俊成, 2023-10-17, 初创\n
- */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "add/add.h"
-#include "log.h"
-/** Description of the macro a */
-#define A		1
+#define MAX_BUFFER_SIZE 1024
 
-#define B		2  /*!< Description of the macro b */
+// 结构体用于存储温度传感器数据
+struct TemperatureSensor {
+    char name[MAX_BUFFER_SIZE];
+    char status[MAX_BUFFER_SIZE];
+    char state[MAX_BUFFER_SIZE];
+    double value;
+    char unit[MAX_BUFFER_SIZE];
+};
 
-/**  Description of global variable  */
-int g_qwe = 0;
- 
-static int s_asd = 0; /*!< Description of static variable */
+int main() {
+    char command[MAX_BUFFER_SIZE];
+    FILE *fp;
 
-/** 
- * @brief		This is a brief description.
- * @details	    This is the detail description. 
- */
-typedef struct
-{
-	int var1; /*!< Detailed description of the member var1 */
-	int var2; /*!< Detailed description of the member var2*/
-	int var3; /*!< Detailed description of the member var3 */
-} abc;
+    // 构建ipmitool命令，获取温度传感器数据
+    snprintf(command, sizeof(command), "ipmitool sdr type Temperature");
 
-/**
- * @brief 程序入口函数
- *
- * @param[in] argc 参数 1 的作用说明
- * @param[in] argv 参数 2 的作用说明
- * @return 返回值的作用说明
- */
-int main(int argc, char *argv[])
-{
-    int a,b;
-    a = A;
-    b = B;
-    g_qwe = a;
-    s_asd = b;
-    int c;
-    c = add(a,b);
-    printf("c is: %d\r\n", c);
+    // 执行命令并读取输出
+    fp = popen(command, "r");
+    if (fp == NULL) {
+        perror("Failed to run ipmitool");
+        return 1;
+    }
+
+    // 定义一个结构体数组，用于存储温度传感器数据
+    struct TemperatureSensor sensors[100];
+    int sensorCount = 0;
+
+    // 读取并解析温度数据
+    char buffer[MAX_BUFFER_SIZE];
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        struct TemperatureSensor sensor;
+        if (sscanf(buffer, "%[^|]|%*s|%s|%*s|%lf %s", sensor.name, sensor.status, sensor.state, &sensor.value, sensor.unit) == 5) {
+            // 将传感器数据存入结构体数组
+            sensors[sensorCount] = sensor;
+            sensorCount++;
+        }
+    }
+
+    // 关闭文件指针
+    pclose(fp);
+
+    // 找到最高温度传感器
+    double maxTemperature = -1.0;
+    char maxTemperatureSensor[MAX_BUFFER_SIZE];
+
+    for (int i = 0; i < sensorCount; i++) {
+        if (sensors[i].value > maxTemperature) {
+            maxTemperature = sensors[i].value;
+            strncpy(maxTemperatureSensor, sensors[i].name, sizeof(maxTemperatureSensor));
+        }
+    }
+
+    printf("Highest temperature sensor: %s\n", maxTemperatureSensor);
+    printf("Highest temperature value: %.1f %s\n", maxTemperature, sensors[0].unit);
+
+    // 根据温度值执行相应的风扇控制
+    if (maxTemperature > 35.0) {
+        // 启用iDRAC动态风扇控制
+        system("ipmitool raw 0x30 0x30 0x02 0xff 0x0f");
+    } else {
+        // 启用手动风扇控制（示例中使用了固定的风扇转速值）
+        system("ipmitool raw 0x30 0x30 0x02 0xff 0x0a"); // 10%示例值
+    }
+
     return 0;
 }

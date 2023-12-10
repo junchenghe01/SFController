@@ -6,6 +6,11 @@
 
 该项目旨在解决某个特定问题或提供某种功能。详细说明项目的目标和背景。
 
+如果监控温度高于 35°C，启用 iDRAC 动态控制。
+如果监测温度低于 35°C，启用手动风扇控制 。
+
+通常建议室温在30度的情况下，最少要达到2500RPM的转速，才能正常保证双路TDP为95W的CPU在load为25%以下的情况下能够正常工作，如果CPU平均load为50%以上的情况下不建议手动降速了，否则可能有影响硬件寿命的风险。
+
 ## 安装说明
 
 首先确保你的计算机上已安装以下软件环境：
@@ -348,11 +353,90 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/add -I$(top_srcdir)/third_party/log.c/src
 # AM_CPPFLAGS += -I$(top_srcdir)/third_party/Unity/src
 
 
-
-    automake --add-missing
-    autoconf 
+修改configure.ac和Makefile.am
+automake --add-missing
+autoconf 
 ./configure  
 make && make install
 make clean 
 make disclean
 make uninstall
+
+## 使用Automake、Autoconf、Aclocal等工具来构建和管理C工程
+
+使用Automake、Autoconf、Aclocal等工具来构建和管理C工程是一个常见的做法，特别是在跨平台开发中，这些工具可以帮助您生成可移植的构建系统。以下是一个简单的示例，展示如何使用这些工具来编译一个C工程：
+
+创建项目目录结构：
+
+在您的项目目录中，创建一个名为configure.ac的文件，该文件包含了Autoconf的配置信息。还可以创建一个名为Makefile.am的文件，该文件包含了Automake的规则。例如：
+
+```bash
+project/
+├── configure.ac
+└── Makefile.am
+```
+编写configure.ac文件：
+
+在configure.ac文件中，您可以定义项目的配置选项、依赖和生成Makefile所需的信息。以下是一个示例：
+
+```bash
+AC_INIT([my_project], [1.0], [your-email@example.com])
+AC_CONFIG_SRCDIR([main.c])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+
+# 检查依赖
+AC_CHECK_PROGS([CC], [gcc])
+AC_CHECK_PROGS([LD], [ld])
+
+# 生成Makefile
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
+```
+编写Makefile.am文件：
+
+在Makefile.am文件中，您可以定义项目的构建规则和源文件列表。以下是一个示例：
+
+```make
+bin_PROGRAMS = my_project
+my_project_SOURCES = main.c utils.c
+
+AM_CPPFLAGS = -I$(top_srcdir)
+AM_CFLAGS = -Wall
+```
+这个示例中，bin_PROGRAMS定义了要生成的可执行文件，my_project_SOURCES列出了源文件，AM_CPPFLAGS和AM_CFLAGS分别指定了编译选项。
+
+使用Autoconf生成configure脚本：
+
+执行以下命令来生成configure脚本：
+
+```bash
+autoreconf --install
+```
+这将使用configure.ac中的配置信息生成configure脚本以及其他必要的文件。
+
+运行configure脚本：
+
+使用生成的configure脚本来配置您的项目。在项目目录中执行以下命令：
+
+```bash
+./configure
+```
+configure将检查系统并生成Makefile，根据您的配置选项和依赖项。
+
+构建项目：
+
+使用生成的Makefile来构建项目：
+
+```bash
+make
+```
+这将编译源文件并生成可执行文件。
+
+运行项目：
+
+使用以下命令来运行项目：
+
+```bash
+./my_project
+```
+这只是一个简单的示例，您可以根据项目的实际需求和复杂性来扩展和自定义configure.ac和Makefile.am文件。这些工具可以让您更轻松地管理C工程的构建过程，并确保项目在不同系统上的可移植性。
